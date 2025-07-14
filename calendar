@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pack 2025-2026 Interactive Planner</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Warm Neutrals & Forest Green -->
+    <!-- Application Structure Plan: The application is structured as a tabbed, single-page dashboard. The user lands on a 'Dashboard' view with high-level stats (volunteer needs, finances, next event) for a quick overview. They can then navigate to dedicated sections: 'Full Calendar' for a detailed, filterable timeline of all events; 'Volunteer Hub' to see and respond to open leadership roles, visualized with a chart to stress urgency; and 'Action Items' which consolidates all tasks into one actionable list. This structure was chosen to transform the linear, text-heavy report into a task-oriented tool. It separates 'at-a-glance' information from 'deep-dive' details, allowing parents to quickly find what's relevant to them, whether it's the next meeting date or a specific volunteer need, which is far more usable than parsing a long email. -->
+    <!-- Visualization & Content Choices: 
+        - Report Info: Vacant Leader Roles (7). Goal: Compare/Alert. Viz: Doughnut Chart in 'Volunteer Hub'. Interaction: Hover to see counts. Justification: A visual representation of the leadership gap is more impactful than a simple list, encouraging action. Library: Chart.js.
+        - Report Info: Event Types. Goal: Organize/Summarize. Viz: Bar Chart on 'Dashboard'. Interaction: Hover to see event counts. Justification: Provides a high-level summary of the year's activities (e.g., more campouts than meetings). Library: Chart.js.
+        - Report Info: Full event list. Goal: Inform/Change. Viz: Interactive chronological timeline in 'Full Calendar'. Interaction: Filter by month/quarter. Justification: A visual timeline is more engaging and easier to scan for dates than a long bulleted list. Method: HTML/CSS/JS.
+        - Report Info: Action items scattered in email. Goal: Organize/Action. Viz: Consolidated table/list in 'Action Items' tab. Interaction: Clickable contact links. Justification: Centralizes all tasks, making it clear what needs to be done and by whom, which was impossible with the original format. Method: HTML/JS.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            top: 1.25rem;
+            left: -0.5rem;
+            width: 1rem;
+            height: 1rem;
+            border-radius: 9999px;
+            background-color: #f5f5f4; /* stone-100 */
+            border: 4px solid #b45309; /* amber-700 */
+            transition: all 0.3s ease;
+        }
+        .timeline-item.past-event::before {
+            background-color: #d6d3d1; /* stone-300 */
+            border-color: #a8a29e; /* stone-400 */
+        }
+        .timeline-item.past-event .event-card {
+            opacity: 0.65;
+            border-color: #e7e5e4; /* stone-200 */
+        }
+    </style>
+</head>
+<body class="bg-stone-50 text-stone-800">
+
+    <div class="container mx-auto p-4 md:p-8 max-w-7xl">
+        
+        <header class="text-center mb-8">
+            <h1 class="text-4xl md:text-5xl font-bold text-green-900">Cub Scout Pack Calendar</h1>
+            <p class="text-stone-600 mt-2 text-lg">2025-2026 Season</p>
+        </header>
+
+        <main>
+            <section id="calendar">
+                 <div class="p-6 bg-white rounded-2xl shadow-sm border border-stone-200 mb-8">
+                    <h2 class="text-2xl font-bold text-green-900 mb-2">Full Pack Calendar (2025-2026)</h2>
+                    <p class="text-stone-600">Here is the complete schedule of planned events for the upcoming year. Past events are faded.</p>
+                </div>
+                <div id="event-timeline" class="relative pl-8 border-l-4 border-stone-200">
+                </div>
+            </section>
+        </main>
+
+    </div>
+
+    <script>
+        const packData = {
+            events: [
+                {
+                    title: "Campfire Program",
+                    date: "2025-07-13",
+                    displayDate: "Sunday, July 13, 2025",
+                    location: "St. Jude Parish Hall",
+                    notes: "",
+                    actions: [],
+                    type: "Pack Event"
+                },
+                {
+                    title: "Recruitment Event",
+                    date: "2025-08-17",
+                    displayDate: "Sunday, August 17, 2025",
+                    location: "St. Jude (all masses)",
+                    notes: "",
+                    actions: [],
+                    type: "Recruitment"
+                },
+                {
+                    title: "First Pack Meeting / Open House",
+                    date: "2025-08-21",
+                    displayDate: "Thursday, August 21, 2025",
+                    location: "St. Jude Parish Hall",
+                    notes: "",
+                    actions: [],
+                    type: "Pack Meeting"
+                },
+                {
+                    title: "Pool Party",
+                    date: "2025-08-24",
+                    displayDate: "Sunday, August 24, 2025 at 4:00 PM",
+                    location: "Seis Lagos Pool",
+                    notes: "",
+                    actions: [],
+                    type: "Pack Event"
+                },
+                {
+                    title: "September Pack Meeting / New Parent Orientation",
+                    date: "2025-09-11",
+                    displayDate: "Thursday, September 11, 2025",
+                    location: "St. Jude Parish Hall",
+                    notes: "",
+                    actions: [],
+                    type: "Pack Meeting"
+                },
+                {
+                    title: "Fishing Derby",
+                    date: "2025-09-13",
+                    displayDate: "Saturday, September 13, 2025",
+                    location: "Bethany Lakes Park",
+                    notes: "",
+                    actions: [],
+                    type: "Pack Event"
+                },
+                {
+                    title: "Carnival Cleanup",
+                    date: "2025-09-20",
+                    displayDate: "Saturday, September 20, 2025",
+                    location: "St. Jude",
+                    notes: "",
+                    actions: [],
+                    type: "Service"
+                },
+                {
+                    title: "Raingutter Regatta",
+                    date: "2025-10-04",
+                    displayDate: "Saturday, October 4, 2025, 1-3 PM",
+                    location: "St. Jude South Lawn",
+                    notes: "",
+                    actions: [],
+                    type: "Pack Event"
+                },
+                {
+                    title: "October Pack Meeting",
+                    date: "2025-10-16",
+                    displayDate: "Thursday, October 16, 2025",
+                    location: "St. Jude Parish Hall",
+                    notes: "",
+                    actions: [],
+                    type: "Pack Meeting"
+                },
+                {
+                    title: "Trunk or Treat",
+                    date: "2025-10-26",
+                    displayDate: "Sunday, October 26, 2025",
+                    location: "St. Jude",
+                    notes: "Awaiting confirmation from parish",
+                    actions: [],
+                    type: "Pack Event"
+                },
+                {
+                    title: "Fall Campout",
+                    date: "2025-11-14",
+                    displayDate: "Nov 14-15",
+                    location: "Camp Wisdom",
+                    notes: "Need BALOO-trained leaders.",
+                    actions: [],
+                    type: "Campout"
+                },
+                 {
+                    title: "November Pack Meeting",
+                    date: "2025-11-20",
+                    displayDate: "Thursday, November 20, 2025",
+                    location: "St. Jude Parish Hall",
+                    notes: "",
+                    actions: [],
+                    type: "Pack Meeting"
+                },
+                {
+                    title: "Salvation Army Bell Ringing",
+                    date: "2025-12-06",
+                    displayDate: "Saturday, December 6, 2025",
+                    location: "Cabela's",
+                    notes: "",
+                    actions: [],
+                    type: "Service"
+                },
+                {
+                    title: "Christmas Parade",
+                    date: "2025-12-07",
+                    displayDate: "Sunday, December 7, 2025",
+                    location: "",
+                    notes: "",
+                    actions: [],
+                    type: "Pack Event"
+                },
+                {
+                    title: "December Pack Meeting",
+                    date: "2025-12-18",
+                    displayDate: "Thursday, December 18, 2025",
+                    location: "St. Jude Parish Hall",
+                    notes: "",
+                    actions: [],
+                    type: "Pack Meeting"
+                },
+                {
+                    title: "January Pack Meeting",
+                    date: "2026-01-15",
+                    displayDate: "Thursday, January 15, 2026",
+                    location: "St. Jude Parish Hall",
+                    notes: "",
+                    actions: [],
+                    type: "Pack Meeting"
+                },
+                {
+                    title: "Pinewood Derby",
+                    date: "2026-01-31",
+                    displayDate: "Saturday, January 31, 2026",
+                    location: "St. Jude Parish Hall",
+                    notes: "",
+                    actions: [],
+                    type: "Pack Event"
+                },
+                {
+                    title: "Scout Sunday",
+                    date: "2026-02-08",
+                    displayDate: "Sunday, February 8, 2026, 10 AM Mass",
+                    location: "St. Jude",
+                    notes: "",
+                    actions: [],
+                    type: "Pack Event"
+                },
+                {
+                    title: "February Pack Meeting",
+                    date: "2026-02-19",
+                    displayDate: "Thursday, February 19, 2026",
+                    location: "St. Jude Parish Hall",
+                    notes: "",
+                    actions: [],
+                    type: "Pack Meeting"
+                },
+                {
+                    title: "Blue & Gold Banquet",
+                    date: "2026-03-07",
+                    displayDate: "Saturday, March 7, 2026",
+                    location: "St. Jude Parish Hall",
+                    notes: "",
+                    actions: [],
+                    type: "Pack Meeting"
+                },
+                 {
+                    title: "March Pack Meeting",
+                    date: "2026-03-19",
+                    displayDate: "Thursday, March 19, 2026",
+                    location: "St. Jude Parish Hall",
+                    notes: "",
+                    actions: [],
+                    type: "Pack Meeting"
+                },
+                {
+                    title: "Spring Campout",
+                    date: "2026-04-10",
+                    displayDate: "April 10-11 or 17-18, 2026",
+                    location: "Camp Trevor Reese Jones (TBD)",
+                    notes: "",
+                    actions: [],
+                    type: "Campout"
+                },
+                {
+                    title: "April Pack Meeting",
+                    date: "2026-04-16",
+                    displayDate: "Thursday, April 16, 2026",
+                    location: "St. Jude Parish Hall",
+                    notes: "",
+                    actions: [],
+                    type: "Pack Meeting"
+                },
+                {
+                    title: "Graduation",
+                    date: "2026-05-16",
+                    displayDate: "Saturday, May 16, 2026",
+                    location: "Bethany Lakes Park",
+                    notes: "",
+                    actions: [],
+                    type: "Pack Event"
+                },
+                 {
+                    title: "May Pack Meeting",
+                    date: "2026-05-21",
+                    displayDate: "Thursday, May 21, 2026",
+                    location: "St. Jude Parish Hall",
+                    notes: "",
+                    actions: [],
+                    type: "Pack Meeting"
+                },
+            ]
+        };
+
+        function populateCalendar() {
+            const timeline = document.getElementById('event-timeline');
+            timeline.innerHTML = ''; 
+            const now = new Date('2025-07-14T15:31:00-07:00'); 
+
+            packData.events.forEach(event => {
+                event.notes = event.notes || "";
+                event.actions = [];
+            });
+
+            packData.events.sort((a, b) => new Date(a.date) - new Date(b.date)).forEach(event => {
+                const item = document.createElement('div');
+                item.className = 'timeline-item mb-8 relative';
+                
+                const eventDate = new Date(event.date);
+                eventDate.setUTCHours(23, 59, 59);
+
+                if (eventDate < now) {
+                    item.classList.add('past-event');
+                }
+
+                item.innerHTML = `
+                    <div class="event-card p-6 bg-white rounded-xl shadow-md border border-stone-200 ml-4 transition-opacity duration-300">
+                        <p class="font-bold text-sm text-amber-700">${event.displayDate}</p>
+                        <h4 class="text-xl font-bold text-green-900 mt-1">${event.title}</h4>
+                        <p class="text-stone-500 text-sm font-medium">${event.location}</p>
+                        <p class="mt-2 text-stone-700">${event.notes}</p>
+                    </div>
+                `;
+                timeline.appendChild(item);
+            });
+        }
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            populateCalendar();
+        });
+    </script>
+</body>
+</html>
